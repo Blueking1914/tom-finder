@@ -123,16 +123,42 @@ function Dropzone({ onFile }) {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop, accept: { 'image/*': [] }, multiple: false,
     })
+    const [pasteFlash, setPasteFlash] = useState(false)
+    const dropzoneRef = useRef(null)
+
+    // ── Clipboard paste support ─────────────────────────────────────────────
+    useEffect(() => {
+        const handlePaste = (e) => {
+            const items = e.clipboardData?.items
+            if (!items) return
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault()
+                    const blob = item.getAsFile()
+                    if (blob) {
+                        const file = new File([blob], `pasted_image.${blob.type.split('/')[1] || 'png'}`, { type: blob.type })
+                        setPasteFlash(true)
+                        setTimeout(() => setPasteFlash(false), 600)
+                        onFile(file)
+                    }
+                    return
+                }
+            }
+        }
+        document.addEventListener('paste', handlePaste)
+        return () => document.removeEventListener('paste', handlePaste)
+    }, [onFile])
 
     return (
         <motion.div
+            ref={dropzoneRef}
             {...getRootProps()}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             style={{
-                border: `2px dashed ${isDragActive ? 'var(--accent)' : 'var(--border2)'}`,
+                border: `2px dashed ${pasteFlash ? 'var(--green)' : isDragActive ? 'var(--accent)' : 'var(--border2)'}`,
                 borderRadius: 'var(--radius)',
-                background: isDragActive ? 'var(--accentl)' : 'var(--card)',
+                background: pasteFlash ? 'var(--greenl)' : isDragActive ? 'var(--accentl)' : 'var(--card)',
                 padding: '56px 32px',
                 textAlign: 'center',
                 cursor: 'pointer',
@@ -161,10 +187,13 @@ function Dropzone({ onFile }) {
                 <Upload size={28} />
             </motion.div>
             <div style={{ fontFamily: 'var(--font-head)', fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
-                {isDragActive ? 'Drop it here' : 'Drop your pet photo'}
+                {pasteFlash ? '✅ Image pasted!' : isDragActive ? 'Drop it here' : 'Drop your pet photo'}
             </div>
             <div style={{ color: 'var(--text2)', fontSize: 14 }}>
                 or <span style={{ color: 'var(--accent)', fontWeight: 500 }}>browse files</span> — JPG, PNG, WEBP
+            </div>
+            <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 10, opacity: 0.7 }}>
+                💡 You can also paste an image from clipboard (Ctrl+V / ⌘V)
             </div>
         </motion.div>
     )
@@ -676,9 +705,6 @@ function MultiPetCards({ pets }) {
                             )}
                         </div>
                         <ConfidenceBar value={pet.confidence} />
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-                            {pet.health_conditions?.map((c, j) => <HealthBadge key={j} label={c} />)}
-                        </div>
                     </motion.div>
                 ))}
             </div>
@@ -702,6 +728,19 @@ function Results({ data, onReset }) {
             <div style={{
                 display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap',
             }}>
+                <motion.button
+                    whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                    onClick={onReset}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '10px 20px', borderRadius: 'var(--radius)',
+                        background: 'var(--accentl)', border: '1px solid rgba(232,108,58,0.3)',
+                        color: 'var(--accent)', fontFamily: 'var(--font-body)', fontSize: 14,
+                        fontWeight: 600, cursor: 'pointer',
+                    }}
+                >
+                    <Upload size={16} /> New Image
+                </motion.button>
                 <voice.ReadButton />
                 <motion.button
                     whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
@@ -774,15 +813,6 @@ function Results({ data, onReset }) {
                         <ConfidenceBar value={vision.confidence} />
                     </div>
 
-                    <div style={{ marginTop: 20 }} id="info-health">
-                        <div style={{
-                            fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase',
-                            letterSpacing: '0.1em', fontWeight: 500, marginBottom: 10,
-                        }}>Health indicators</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {vision.health_conditions.map((c, i) => <HealthBadge key={i} label={c} />)}
-                        </div>
-                    </div>
                 </div>
             </div>
 
