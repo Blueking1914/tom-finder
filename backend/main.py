@@ -1,8 +1,3 @@
-"""
-Tom Finder API — FastAPI backend with EfficientNetV2-S classification,
-YOLOv8 multi-pet detection, emotion heuristics, health analysis,
-and Gemini LLM enrichment.
-"""
 
 import os
 import io
@@ -490,7 +485,7 @@ async def analyze(file: UploadFile = File(...)):
         }
         multi_results.append({**pet, "info": pet_info})
 
-    # 5. Return base64 preview
+  
     buf = io.BytesIO()
     img_thumb = img.copy()
     img_thumb.thumbnail((600, 600))
