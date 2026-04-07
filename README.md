@@ -1,4 +1,4 @@
-# 🐾 PawSense — AI Pet Intelligence v2.0
+# 🐾 PawSense — AI Pet Intelligence 
 
 Upload a photo of any cat or dog. PawSense detects the species, identifies the breed,
 assesses visible health conditions, reads emotions, and uses Claude AI to give you expert insights —
